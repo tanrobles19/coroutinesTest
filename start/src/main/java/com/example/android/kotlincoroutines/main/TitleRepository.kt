@@ -47,20 +47,30 @@ class TitleRepository(val network: MainNetwork, val titleDao: TitleDao) {
 
     // TODO: Add coroutines-based `fun refreshTitle` here
 
+//    suspend fun refreshTitle() {
+//        withContext(Dispatchers.IO) {
+//            val result = try {
+//                network.fetchNextTitle().execute()
+//            }catch (cause: Throwable) {
+//                throw TitleRefreshError("Unable to refresh the title", cause)
+//            }
+//            if(result.isSuccessful) {
+//                titleDao.insertTitle(Title(result.body()!!  + "_"))
+//            }else{
+//                throw TitleRefreshError("Unable to refresh the title", null)
+//            }
+//        }
+//    }
+
     suspend fun refreshTitle() {
-        withContext(Dispatchers.IO) {
-            val result = try {
-                network.fetchNextTitle().execute()
-            }catch (cause: Throwable) {
-                throw TitleRefreshError("Unable to refresh the title", cause)
-            }
-            if(result.isSuccessful) {
-                titleDao.insertTitle(Title(result.body()!!  + "_"))
-            }else{
-                throw TitleRefreshError("Unable to refresh the title", null)
-            }
+        try {
+            val result = network.fetchNextTitle()
+            titleDao.insertTitle(Title(result))
+        }catch (cause: Throwable) {
+            throw TitleRefreshError("Unable to refresh the title", cause)
         }
     }
+
 
 //    fun refreshTitleWithCallbacks(titleRefreshCallback: TitleRefreshCallback) {
 //        // This request will be run on a background thread by retrofit
