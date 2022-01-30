@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.android.kotlincoroutines.util.BACKGROUND
 import com.example.android.kotlincoroutines.util.singleArgViewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -120,21 +121,38 @@ class MainViewModel(private val repository: TitleRepository) : ViewModel() {
         _snackBar.value = null
     }
 
+    private fun launchDataLoad(block: suspend () -> Unit): Job {
+        return viewModelScope.launch {
+            try {
+                _spinner.value = true
+                block()
+             }catch (error: TitleRefreshError) {
+                 _snackBar.value = error.message
+             }finally {
+                 _spinner.value = false
+             }
+        }
+    }
+
     /**
      * Refresh the title, showing a loading spinner while it refreshes and errors via snackbar.
      */
     fun refreshTitle() {
 
-        viewModelScope.launch {
-            try {
-                _spinner.value = true
-                repository.refreshTitle()
-            }catch (error: TitleRefreshError) {
-                _snackBar.postValue(error.message)
-                _spinner.postValue(false)
-            }finally {
-                _spinner.postValue(false)
-            }
+        launchDataLoad {
+            repository.refreshTitle()
+        }
+
+//        viewModelScope.launch {
+//            try {
+//                _spinner.value = true
+//                repository.refreshTitle()
+//            }catch (error: TitleRefreshError) {
+//                _snackBar.postValue(error.message)
+//                _spinner.postValue(false)
+//            }finally {
+//                _spinner.postValue(false)
+//            }
 
         }
 
@@ -150,5 +168,5 @@ class MainViewModel(private val repository: TitleRepository) : ViewModel() {
 //                _spinner.postValue(false)
 //            }
 //        })
-    }
+//    }
 }
